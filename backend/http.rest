@@ -1,0 +1,32 @@
+POST  http://localhost:7474/api/auth/signup
+Content-Type: application/json
+
+{
+    "username":"t",
+    "email":"123",
+    "password":"1234",
+    "rol":"601c86f8c1935967ca576bf1"
+}
+
+###
+GET   http://localhost:7474/api/auth/getToken
+Content-Type: application/json
+Authorization: Basic manuel:1234
+
+###
+GET   http://localhost:7474/api/auth/validatetoken
+Content-Type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMTllNjU5ZmVlMWM0MzllYzIxODg4OSIsImlhdCI6MTYxMjQ1NzYyNywiZXhwIjoxNjEyNDU5NDI3fQ.XMlzJkwi0V9sMmqByoU1JwtQcG78rJNjQrBwXA-wLVw
+
+###
+GET   http://localhost:7474/api/auth/api/foo
+Content-Type: application/json
+
+###
+GET   http://localhost:7474/socket.io/socket.io.js
+Content-Type: application/xhtml+xml
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMTllNjU5ZmVlMWM0MzllYzIxODg4OSIsImlhdCI6MTYxMjMyODIzNSwiZXhwIjoxNjEyMzMwMDM1fQ.zE9vPZTGBSqC0AWnSmnmdkO73wPn8K7GtFftfEV1nH8
+
+{
+    "hola":"hello"
+}
