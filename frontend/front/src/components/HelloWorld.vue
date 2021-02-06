@@ -15,7 +15,7 @@
         aria-describedby="button-addon2"
       />
       <button
-        v-on:click="join()"
+        @click="join"
         class="btn btn-outline-secondary"
         type="button"
         id="button-addon2"
@@ -34,14 +34,15 @@ export default {
     msg: String,
   },
   methods:{
-    join(){
+    join : function(){
       let user =JSON.parse(atob(sessionStorage.getItem("token").split(".")[1]))
-        this.socket.emit("loggedin", {username:user.username})
-        this.socket.emit("want-to-chat")
-        this.socket.on("Consultant", data =>{console.log(data)})
-        // this.socket.on("",data =>{
-        //   console.log(data)
-        // })
+      this.socket.emit("loggedin", {username:user.username})
+      this.socket.emit("want-to-chat")
+      this.socket.on("Consultant", data =>{
+      this.iteration += 1
+      console.log(`data : ${data} iteration ${this.iteration}`)}
+          )
+
         // this.socket.emit("private message", this.socket.id, "ping")
         // this.socket.on("private message",(data,d) =>{
         //   console.log("private message")
@@ -54,6 +55,7 @@ export default {
       socket: {},
       message: null,
       toSend: null,
+      iteration: 0
     };
   },
   created: function () {

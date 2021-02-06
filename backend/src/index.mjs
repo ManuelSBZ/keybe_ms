@@ -13,6 +13,7 @@ import stackModel from "./models/stack"
 import rolModel from "./models/Rol"
 import chatModel from "./models/Chat"
 import { default as Schema } from "./models/Schema2"
+import messageModel from "./models/Message"
 // import {default as model} from "./models/Model2"
 
 
@@ -21,33 +22,35 @@ app.use(cors())
 const server = http.createServer(app)
 const port = 7474
 
-const io = socketio(server, {cors: {
-    origin: "*",
-    methods: ["GET", "POST","PACTH","PUT","DELETE"],
-    allow_headers:["x-access-token"],
-    credentials:true
-  }})
-
-server.listen(port)
-io.on('connection', (socket) => { 
-    socket.emit("message","ping pong from back")
-    console.log(socket.id)
-    socket.on("onjoin",(username,room) => {
-        console.log(`this is the id from client ${socket.id}, ${room}, ${username}`)
-        socket.join(room)
-        io.to(room).emit("onjoin","hola")
-        console.log(io.sockets)
-    })
-
-    // socket.on("private message", (anotherSocketId, msg) => {
-    //     console.log(`socket: ${anotherSocketId}, msg: ${msg}`)
-    //     io.to(anotherSocketId).emit("private message", socket.id, "pong")
-    //     console.log("finish")
-    //   })
+const io = socketio(server, {
+    cors: {
+        origin: "http://localhost:8080",
+        methods: ["GET", "POST", "PACTH", "PUT", "DELETE"],
+        allow_headers: ["x-access-token"],
+        credentials: true
+    }
 })
 
-io.on('connection', (socket) => {
+server.listen(port)
+// io.on('connection', (socket) => { 
+//     socket.emit("message","ping pong from back")
+//     console.log(socket.id)
+//     socket.on("onjoin",(username,room) => {
+//         console.log(`this is the id from client ${socket.id}, ${room}, ${username}`)
+//         socket.join(room)
+//         io.to(room).emit("onjoin","hola")
+//         console.log(io.sockets)
+//     })
 
+// socket.on("private message", (anotherSocketId, msg) => {
+//     console.log(`socket: ${anotherSocketId}, msg: ${msg}`)
+//     io.to(anotherSocketId).emit("private message", socket.id, "pong")
+//     console.log("finish")
+//   })
+// })
+
+io.on('connection', (socket) => {
+    console.log(`se conectado el socket : ${socket.id}`)
     // socket.on("loggedin", async (data) => {
     //     let addstack = new stackModel({
     // //         username: data.username
@@ -55,8 +58,33 @@ io.on('connection', (socket) => {
     //     socker.username = data.username
     //     await addstack.save()
     // })
-    socket.on("want-to-chat", async (data) => {
-        io.emit("Consultant", socket.id)
+    socket.emit("message", "ping pong from back")
+
+    socket.on("send-message", async data => {
+        const message = new messageModel(
+            {
+                sender: data.sender,
+                message: data.message,
+                receiver: data.receiver
+            }
+        )
+            message.save((error, msg) => {
+            console.log(msg)
+            const data = { sender: msg.sender, receiver: msg.receiver, message: msg.message, date: msg.date }
+            console.log(`esta es la data antes de ser devuelta ${JSON.stringify(data)}`)
+            // io.emit("resend-message",data)
+            console.log("resend message")
+            let chat = messageModel.find({sender:data.sender,receiver:data.receiver}, (error,chat)=>{
+                io.emit("resend-message",chat)
+            })
+        })
+
+
+
+    })
+
+    socket.on("want-to-chat", (data) => {
+        io.emit("Consultant", socket.id, `hola`)
     })
     socket.on("accept-chat", async (data) => {
         const ticket = new ticketModel(
@@ -64,11 +92,11 @@ io.on('connection', (socket) => {
                 ticket: uuid()
             }
         )
-        ticket.save( async (error,doc)=>{
+        ticket.save(async (error, doc) => {
             const chat = new chatModel(
                 {
                     _id: new Schema.Types.ObjectId(),
-                    ticket:doc.id
+                    ticket: doc.id
                 }
             )
             doc.chat = chat._id

@@ -1,14 +1,10 @@
 const { Schema, model } = require("Mongoose")
-
+const uuid= require("../functions/uuid")
 const chatSchema = new Schema(
     {
-        messages: [{
-            sender: { username: String },
-            receiver: { username: String },
-            message: { type: String },
-            date: {type: Date, default: Date.now}
-        }
+        messages: [{type: Schema.Types.ObjectId, ref:"Message"}
         ],
+        chatSessionId:{type:String, default:uuid, unique=true},
         ticket: {type: Schema.Types.ObjectId, ref:"Ticket", unique:true},
 
     }
