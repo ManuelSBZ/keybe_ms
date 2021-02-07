@@ -148,7 +148,8 @@ export default {
   created: function () {
     //console.log(this.user);
     console.log("CREATED");
-    this.user = JSON.parse(atob(sessionStorage.getItem("token").split(".")[1]));
+    if(sessionStorage.getItem("token"))
+    {this.user = JSON.parse(atob(sessionStorage.getItem("token").split(".")[1]))}
     this.socket = io("http://localhost:7474");
   },
   mounted: function () {
