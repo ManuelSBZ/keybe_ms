@@ -2,7 +2,7 @@ const { Schema, model } = require("Mongoose")
 
 const StackSchema = new Schema(
     {
-        stackuser: [{ username: String}]
+        stackuser: [{ username: String, idSocket:String}]
 
     }
 )

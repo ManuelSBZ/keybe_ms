@@ -58,30 +58,76 @@ io.on('connection', (socket) => {
     //     socker.username = data.username
     //     await addstack.save()
     // })
-    socket.emit("message", "ping pong from back")
 
+
+
+// AUN NO SE PUEDE CONECTAR A DOS USUARIOS
     socket.on("send-message", async data => {
-        const message = new messageModel(
+        console.log("SEND-MESSAGE")
+        let message = new messageModel(
             {
                 sender: data.sender,
                 message: data.message,
                 receiver: data.receiver
             }
         )
-            message.save((error, msg) => {
-            console.log(msg)
-            const data = { sender: msg.sender, receiver: msg.receiver, message: msg.message, date: msg.date }
-            console.log(`esta es la data antes de ser devuelta ${JSON.stringify(data)}`)
-            // io.emit("resend-message",data)
-            console.log("resend message")
-            let chat = messageModel.find({sender:data.sender,receiver:data.receiver}, (error,chat)=>{
-                io.emit("resend-message",chat)
+        const MESSAGE = await message.save()
+        console.log(data.chatId)
+        const chatId = data.chatId || false
+        const ticket = data.ticket || false
+        if (ticket && chatId) {
+            console.log("ticket")
+        } else if (chatId) {
+            const chat = await chatModel.findOne({ "chatId": chatId })
+                .populate("messages")
+                .exec(async (error, chatFounded) => {
+                    if (error) console.log(error)
+                    chatFounded.messages.push(message)
+                    chatFounded.save()
+                    io.emit("sending-chat", chatFounded)
+                }
+
+                )
+        }
+        else {
+            const chat = new chatModel(
+                {
+                    messages: [MESSAGE]//PORNE ID ?
+                }
+            )
+            chat.save(async (error, chat) => {
+                if (error) console.log(error)
+                else {
+                    console.log("sendinf messageeeeeeeeee")
+                    const CHAT = await chat.populate("Message")
+                    console.log(`es es el chat INICIAL populate en send-message: ${JSON.stringify(CHAT)}`)
+                    io.emit("sending-chat", CHAT)
+                }
             })
-        })
+        }
+        // message.save((error, msg) => {
+        //     console.log(msg)
+        //     const data = {
+        //         sender: msg.sender,
+        //         receiver: msg.receiver,
+        //         message: msg.message,
+        //         date: msg.date
+        //     }
+        //     console.log(`esta es la data antes de ser devuelta\
+        //                                  ${JSON.stringify(data)}`)
+        //     console.log("resend message")
+        //     let chat = messageModel.find({
+        //         sender: data.sender, receiver: data.receiver
+        //     }, (error, chat) => {
+        //         io.emit("resend-message", chat)
+        // })
+        // })
 
 
 
     })
+
+
 
     socket.on("want-to-chat", (data) => {
         io.emit("Consultant", socket.id, `hola`)

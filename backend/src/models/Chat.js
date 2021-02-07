@@ -4,8 +4,8 @@ const chatSchema = new Schema(
     {
         messages: [{type: Schema.Types.ObjectId, ref:"Message"}
         ],
-        chatSessionId:{type:String, default:uuid, unique=true},
-        ticket: {type: Schema.Types.ObjectId, ref:"Ticket", unique:true},
+        chatId:{type:String, default:uuid, unique:true},
+        ticket: {type: Schema.Types.ObjectId, ref:"Ticket"},
 
     }
 )

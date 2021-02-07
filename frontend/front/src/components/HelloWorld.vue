@@ -30,9 +30,6 @@
 import io from "socket.io-client";
 export default {
   name: "HelloWorld",
-  props: {
-    msg: String,
-  },
   methods:{
     join : function(){
       let user =JSON.parse(atob(sessionStorage.getItem("token").split(".")[1]))
