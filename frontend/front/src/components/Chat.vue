@@ -96,13 +96,13 @@ export default {
       //   //console.log(`esta es el mensaje del back ${JSON.stringify(data)}`);
       //   this.message = data
       // });
-      this.socket.once("sending-chat", (data) => {
-        console.log(`esta es el mensaje del back ${JSON.stringify(data) }`);
-        this.message = data.messages;
-        if (!this.chatId) {
-          this.chatId = data.chatId
-          };
-      });
+      // this.socket.once("sending-chat", (data) => {
+      //   console.log(`esta es el mensaje del back ${JSON.stringify(data) }`);
+      //   this.message = data.messages;
+      //   if (!this.chatId) {
+      //     this.chatId = data.chatId
+      //     };
+      // });
     },
     join: async function () {
       // //console.log(this.user.username)
@@ -154,6 +154,13 @@ export default {
   },
   mounted: function () {
     //console.log(this.user);
+          this.socket.on("sending-chat", (data) => {
+        console.log(`esta es el mensaje del back ${JSON.stringify(data) }`);
+        this.message = data.messages;
+        if (!this.chatId) {
+          this.chatId = data.chatId
+          };
+      });
     console.log("MOUNTED");
     this.socket.on("message", (data) => {
       this.message = data;
