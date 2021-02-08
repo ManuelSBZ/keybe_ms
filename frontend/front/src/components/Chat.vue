@@ -61,6 +61,15 @@
                   >
                     disconnet
                   </button>
+                                    <button
+                    @click="done"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    id="button-addon2"
+                  >
+                  done
+                  </button>
+
                 </div>
               </div>
             </div>
@@ -85,7 +94,6 @@ export default {
       chatId: null,
       toSend: null,
       messageToSend: null,
-      iteration: 0,
       user: null,
       receiver: "alf" /* poner dinamico este valor */,
     };
@@ -105,6 +113,11 @@ export default {
       this.socket.disconnect();
       this.$router.push("/login");
     },
+    done: function(){
+      this.socket.emit("done-consultant",true)
+      this.message = []
+      this.chatId = null
+    }
   },
 
   created: function () {

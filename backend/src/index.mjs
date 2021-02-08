@@ -48,66 +48,90 @@ server.listen(port)
 //     console.log("finish")
 //   })
 // })
-let consultants = {}
+let consultants = { able: {}, unable: {} }
+let sockets = {}
 io.on('connection', (socket) => {
     console.log(`se conectado el socket : ${socket.id}`)
-    socket.on("identity", user =>{
+    socket.on("identity", user => {
         socket.username = user.username
-        if(String(user.rol) === "1"){
-                console.log(`este es el usuario ${JSON.stringify(user)}`)
-                let consultant = {[user.username]:user.id }
-                consultants = {...consultants, ...consultant}
-                console.log(`este es pa lista de consultants conectados ${JSON.stringify(consultants)}`)
+        sockets[socket.id] = socket
+        if (String(user.rol) === "1") {
+            //Consultants
+            console.log(`this is the user${JSON.stringify(user)}`)
+            let consultant = { [user.username]:socket.id }
+            console.log(`this is the consultant${consultant}`)
+            consultants.able = { ...consultants.able, ...consultant }
+            console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
+        } else {
+            if (Object.entries(consultants.able).length) {
+                //Basics
+                const chat = new chatModel({})
+                chat.save((error, chatCreated) => {
+                    if (error) console.log(error)
+                    console.log(`JOIN TO CHAT WITH ID ${chatCreated.chatId}`)
+                    socket.join(chatCreated.chatId) // sincronizar cliente
+                    let consultant = Object.entries(consultants.able)[0]
+                    const USERNAME = consultant[0]
+                    const ID = consultant[1]
+                    delete consultants.able[USERNAME]
+                    consultants.unable[USERNAME] = chatCreated.chatId
+                    const suporter = sockets[ID]
+                    suporter.join(chatCreated.chatId)// sincronizar cliente
+                    suporter.receiver = USERNAME
+                    suporter.chatId =chatCreated.chatId
+                    socket.receiver = suporter.username
+                    socket.chatId = chatCreated.chatId
+                })
+            }
         }
 
     })
-    
 
-
-// AUN NO SE PUEDE CONECTAR A DOS USUARIOS
+    // AUN NO SE PUEDE CONECTAR A DOS USUARIOS
     socket.on("send-message", async data => {
         console.log("SEND-MESSAGE")
+        console.log(`ROOM : ${socket.chatId}`)
         let message = new messageModel(
             {
-                sender: data.sender,
+                sender: socket.username,
                 message: data.message,
-                receiver: data.receiver
+                receiver: socket.receiver
             }
         )
         const MESSAGE = await message.save()
         console.log(data.chatId)
-        const chatId = data.chatId || false
+        // const chatId = data.chatId || false
         const ticket = data.ticket || false
-        if (ticket && chatId) {
+        if (ticket && socket.chatId) {
             console.log("ticket")
-        } else if (chatId) {
-            const chat = await chatModel.findOne({ "chatId": chatId })
+        } else if (socket.chatId) {
+            const chat = await chatModel.findOne({ "chatId": socket.chatId })
                 .populate("messages")
                 .exec(async (error, chatFounded) => {
                     if (error) console.log(error)
                     chatFounded.messages.push(message)
                     chatFounded.save()
-                    io.emit("sending-chat", chatFounded)
+                    io.to(socket.chatId).emit("sending-chat", chatFounded)
                 }
 
                 )
         }
-        else {
-            const chat = new chatModel(
-                {
-                    messages: [MESSAGE]//PORNE ID ?
-                }
-            )
-            chat.save(async (error, chat) => {
-                if (error) console.log(error)
-                else {
-                    console.log("sendinf messageeeeeeeeee")
-                    const CHAT = await chat.populate("Message")
-                    console.log(`es es el chat INICIAL populate en send-message: ${JSON.stringify(CHAT)}`)
-                    io.emit("sending-chat", CHAT)
-                }
-            })
-        }
+        // else {
+        //     const chat = new chatModel(
+        //         {
+        //             messages: [MESSAGE]//PORNE ID ?
+        //         }
+        //     )
+        //     chat.save(async (error, chat) => {
+        //         if (error) console.log(error)
+        //         else {
+        //             console.log("sendinf messageeeeeeeeee")
+        //             const CHAT = await chat.populate("Message")
+        //             console.log(`es es el chat INICIAL populate en send-message: ${JSON.stringify(CHAT)}`)
+        //             io.emit("sending-chat", CHAT)
+        //         }
+        //     })
+        // }
         // message.save((error, msg) => {
         //     console.log(msg)
         //     const data = {
@@ -130,36 +154,43 @@ io.on('connection', (socket) => {
 
     })
 
+    socket.on("done-consultant", data =>{
+        consultants.unable[socket.username] = socket.id
+        consultants.able = {...consultants.able,...consultants.unable[socket.username]}
+    })
 
 
-    socket.on("want-to-chat", (data) => {
-        io.emit("Consultant", socket.id, `hola`)
-    })
-    socket.on("accept-chat", async (data) => {
-        const ticket = new ticketModel(
-            {
-                ticket: uuid()
-            }
-        )
-        ticket.save(async (error, doc) => {
-            const chat = new chatModel(
-                {
-                    _id: new Schema.Types.ObjectId(),
-                    ticket: doc.id
-                }
-            )
-            doc.chat = chat._id
-            await chat._id
-        })
-    })
+    // socket.on("want-to-chat", (data) => {
+    //     io.emit("Consultant", socket.id, `hola`)
+    // })
+    // socket.on("accept-chat", async (data) => {
+    //     const ticket = new ticketModel(
+    //         {
+    //             ticket: uuid()
+    //         }
+    //     )
+    //     ticket.save(async (error, doc) => {
+    //         const chat = new chatModel(
+    //             {
+    //                 _id: new Schema.Types.ObjectId(),
+    //                 ticket: doc.id
+    //             }
+    //         )
+    //         doc.chat = chat._id
+    //         await chat._id
+    //     })
     socket.on("disconnect", async () => {
         console.log(`${socket.username}:${socket.id} has left the party.`);
-        if (consultants.hasOwnProperty(socket.username)){
+        if (consultants.able.hasOwnProperty(socket.username)) {
             console.log(` result if ${true}`)
-            console.log(`lista actual de consultores: ${JSON.stringify(consultants)}`)
-            delete consultants[socket.username]   
-            console.log(`lista actualizada ${JSON.stringify(consultants)}`)         
+            console.log(`actual list of consultants: ${JSON.stringify(consultants)}`)
+            delete consultants.able[socket.username]
+            console.log(`actual constultant's list ${JSON.stringify(consultants)}`)
+        } else if (consultants.unable.hasOwnProperty(socket.username)) {
+            console.log(`disconnect: ${socket.username}`)
+            console.log(`actual list of consultants: ${JSON.stringify(consultants)}`)
+            delete consultants.unable[socket.username] // problema desaparece de la lista
+            console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
         }
-        
     })
 })
