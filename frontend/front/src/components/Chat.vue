@@ -61,13 +61,23 @@
                   >
                     disconnet
                   </button>
-                                    <button
+                    <button
+                    v-if="user.rol  === '1'"
                     @click="done"
                     class="btn btn-outline-secondary"
                     type="button"
                     id="button-addon2"
                   >
                   done
+                  </button>
+                    <button
+                    v-if="user.rol  === '1'"
+                    @click="ticketGeneration"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    id="button-addon2"
+                  >
+                  ticket
                   </button>
 
                 </div>
@@ -102,11 +112,7 @@ export default {
     uuid: uuid,
     sendMessage: async function () {
       this.socket.emit("send-message", {
-        receiver: this.receiver,
-        sender: this.user.username,
         message: this.messageToSend,
-        chatId: this.chatId,
-        ticket: this.ticket,
       });
     },
     disconnect: function () {
@@ -117,6 +123,10 @@ export default {
       this.socket.emit("done-consultant",true)
       this.message = []
       this.chatId = null
+    },
+    ticketGeneration: function(){
+      console.log("enviando algo")
+      this.socket.emit("generate-ticket",true)
     }
   },
 
@@ -135,6 +145,7 @@ export default {
     });
     this.socket.on("sending-chat", (data) => {
       this.message = data.messages;
+      console.log(`this is the chat : ${JSON.stringify(data.messages)}`)
       if (!this.chatId) {
         this.chatId = data.chatId;
       }

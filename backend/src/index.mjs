@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
         if (String(user.rol) === "1") {
             //Consultants
             console.log(`this is the user${JSON.stringify(user)}`)
-            let consultant = { [user.username]:socket.id }
+            let consultant = { [user.username]: socket.id }
             console.log(`this is the consultant${consultant}`)
             consultants.able = { ...consultants.able, ...consultant }
             console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
@@ -77,8 +77,8 @@ io.on('connection', (socket) => {
                     consultants.unable[USERNAME] = chatCreated.chatId
                     const suporter = sockets[ID]
                     suporter.join(chatCreated.chatId)// sincronizar cliente
-                    suporter.receiver = USERNAME
-                    suporter.chatId =chatCreated.chatId
+                    suporter.receiver = socket.username
+                    suporter.chatId = chatCreated.chatId
                     socket.receiver = suporter.username
                     socket.chatId = chatCreated.chatId
                 })
@@ -87,7 +87,6 @@ io.on('connection', (socket) => {
 
     })
 
-    // AUN NO SE PUEDE CONECTAR A DOS USUARIOS
     socket.on("send-message", async data => {
         console.log("SEND-MESSAGE")
         console.log(`ROOM : ${socket.chatId}`)
@@ -99,7 +98,6 @@ io.on('connection', (socket) => {
             }
         )
         const MESSAGE = await message.save()
-        console.log(data.chatId)
         // const chatId = data.chatId || false
         const ticket = data.ticket || false
         if (ticket && socket.chatId) {
@@ -116,6 +114,61 @@ io.on('connection', (socket) => {
 
                 )
         }
+        // socket.on("generate-ticket", async data => {
+        //     console.log("GENERATE TIKET HACE ESTOOOOOOOO")
+        // await chatModel.findOne({ "chatId": socket.chatId })
+        //     .populate("messages")
+        //     .exec((error, chatFound) => {
+        //         if (error) console.log(error)
+        //         let ticket = new ticketModel(
+        //             {
+        //                 chat: chatFound
+        //             }
+        //         )
+        //         // ticket.save()
+        //         const messageTicket = new messageModel(
+        //             {
+        //                 sender: socket.username,
+        //                 message: `Ticke del caso: ${ticket}`,
+        //                 receiver: socket.receiver
+        //             }
+        //         )
+        //         // messageTicket.save()
+        //         chatFound.ticket = ticket
+        //         chatFound.messages.push(messageTicket)
+        //         chatFound.save()
+        //         console.log(`SENDING TICKET to chat ${socket.chatId}`)
+        //         io.to(socket.chatId).emit("sending-chat", chatFound)
+
+
+        //     })
+
+        //aqui
+        // const chat = await chatModel.findOne({ "chatId": socket.chatId })
+        //     .populate("messages")
+        //     .exec(async (error, chatFounded) => {
+        //         if (error) console.log(error)
+        //         let ticketObject = new ticketModel(
+        //             {
+        //                 chat: chatFounded
+        //             }
+        //         )
+        //         ticketObject.save()
+        //         let messageTicket = new messageModel(
+        //             {
+        //                 ticket:ticketObject
+        //             }
+        //             )
+        //         messageTicket.save()
+        //         chatFounded.messages.push(messageTicket)
+        //         chatFounded.ticket = ticketObject
+        //         await chatFounded.save()
+        //         io.to(socket.chatId).emit("sending-chat", chatFounded)
+        //     }
+
+        //     )
+        // termina
+        // })
         // else {
         //     const chat = new chatModel(
         //         {
@@ -154,9 +207,51 @@ io.on('connection', (socket) => {
 
     })
 
-    socket.on("done-consultant", data =>{
+
+    socket.on("generate-ticket", () => {
+        console.log("GENERATEEEEEEEEEE TOKENNNNN")
+        chatModel.findOne({ "chatId": socket.chatId })
+            .populate("messages")
+            .exec(async (error, chatFounded) => {
+                console.log("dentro de exec")
+                if (error) console.log(error)
+                let ticketObject = new ticketModel(
+                    {
+                        chat: chatFounded
+                    }
+                )
+                console.log(`going to save ticketObject ${JSON.stringify(ticketObject)}`)
+                await ticketObject.save(async(error, ticketObj) => {
+                    let messageTicket = new messageModel(
+                        {
+                            sender:socket.username,
+                            message: `this is your ticket : ${ticketObj.ticket}`,
+                            receiver:socket.receiver
+                        }
+                    )
+                    console.log(`going to save messageticket ${JSON.stringify(messageTicket)}`)
+
+                    await messageTicket.save(async (error, msg) => {
+                        chatFounded.messages.push(messageTicket)
+                        chatFounded.ticket = ticketObject.toJSON().ticket
+                        console.log(`going to save chatFounded ${JSON.stringify(chatFounded)}`)
+
+                        await chatFounded.save()
+                        io.to(socket.chatId).emit("sending-chat", chatFounded)
+
+                    })
+
+                })
+
+            }
+
+            )
+
+    }
+    )
+    socket.on("done-consultant", data => {
         consultants.unable[socket.username] = socket.id
-        consultants.able = {...consultants.able,...consultants.unable[socket.username]}
+        consultants.able = { ...consultants.able, ...consultants.unable[socket.username] }
     })
 
 
