@@ -48,17 +48,20 @@ server.listen(port)
 //     console.log("finish")
 //   })
 // })
-
+let consultants = {}
 io.on('connection', (socket) => {
     console.log(`se conectado el socket : ${socket.id}`)
-    // socket.on("loggedin", async (data) => {
-    //     let addstack = new stackModel({
-    // //         username: data.username
-    // //     })
-    //     socker.username = data.username
-    //     await addstack.save()
-    // })
+    socket.on("identity", user =>{
+        socket.username = user.username
+        if(String(user.rol) === "1"){
+                console.log(`este es el usuario ${JSON.stringify(user)}`)
+                let consultant = {[user.username]:user.id }
+                consultants = {...consultants, ...consultant}
+                console.log(`este es pa lista de consultants conectados ${JSON.stringify(consultants)}`)
+        }
 
+    })
+    
 
 
 // AUN NO SE PUEDE CONECTAR A DOS USUARIOS
@@ -150,8 +153,13 @@ io.on('connection', (socket) => {
         })
     })
     socket.on("disconnect", async () => {
-        console.log(`${socket.username} has left the party.`);
-        io.emit("userLeft", socket.username);
-        await stackModel.deleteOne({ username: socket.username })
+        console.log(`${socket.username}:${socket.id} has left the party.`);
+        if (consultants.hasOwnProperty(socket.username)){
+            console.log(` result if ${true}`)
+            console.log(`lista actual de consultores: ${JSON.stringify(consultants)}`)
+            delete consultants[socket.username]   
+            console.log(`lista actualizada ${JSON.stringify(consultants)}`)         
+        }
+        
     })
 })

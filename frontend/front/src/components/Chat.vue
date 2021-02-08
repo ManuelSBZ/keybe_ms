@@ -52,6 +52,15 @@
                   >
                     Send
                   </button>
+                  <br />
+                  <button
+                    @click="disconnect"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    id="button-addon2"
+                  >
+                    disconnet
+                  </button>
                 </div>
               </div>
             </div>
@@ -84,87 +93,38 @@ export default {
   methods: {
     uuid: uuid,
     sendMessage: async function () {
-      console.log(`this is the chatId: ${this.chatId}`)
       this.socket.emit("send-message", {
         receiver: this.receiver,
         sender: this.user.username,
         message: this.messageToSend,
         chatId: this.chatId,
-        ticket: this.ticket
+        ticket: this.ticket,
       });
-      // this.socket.once("resend-message", (data) => {
-      //   //console.log(`esta es el mensaje del back ${JSON.stringify(data)}`);
-      //   this.message = data
-      // });
-      // this.socket.once("sending-chat", (data) => {
-      //   console.log(`esta es el mensaje del back ${JSON.stringify(data) }`);
-      //   this.message = data.messages;
-      //   if (!this.chatId) {
-      //     this.chatId = data.chatId
-      //     };
-      // });
     },
-    join: async function () {
-      // //console.log(this.user.username)
-      this.socket.emit("loggedin", { username: this.user.username });
-      this.socket.emit("want-to-chat");
-      this.iteration += 1;
-      // //console.log(this.iteration)
-      await this.socket.once("Consultant", (data) => {
-        // this.iteration += 1
-        console.log(data);
-        //console.log(`data : ${data} `);
-      });
-
-      // //console.log(this.iteration)
-      // this.socket.emit("private message", this.socket.id, "ping")
-      // this.socket.on("private message",(data,d) =>{
-      //   //console.log("private message")
-      //   //console.log(data,d)
+    disconnect: function () {
+      this.socket.disconnect();
+      this.$router.push("/login");
     },
   },
-  
-  //   beforeRouteEnter: async function () {
-  //     //console.log("beforeeeeeeeeeeeeeeeeeeeeeeeeeeee")
-  //     const token = sessionStorage.getItem("token");
-  //     if (!token) this.$router.push("/login");
-  //     //console.log(`TOKEN : ${token}`);
-  //     const response = await fetch(
-  //       "http://localhost:7474/api/auth/validatetoken",
-  //       {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           "x-access-token": `${token}`,
-  //         },
-  //       }
-  //     );
-  //     const result = await response.json();
-  //     //console.log(`result : ${result}`);
-  //     if (!result.authenticated) {
-  //       this.$router.push("/login")
-  //     }
-  //   },
+
   created: function () {
-    //console.log(this.user);
-    console.log("CREATED");
-    if(sessionStorage.getItem("token"))
-    {this.user = JSON.parse(atob(sessionStorage.getItem("token").split(".")[1]))}
+    if (sessionStorage.getItem("token")) {
+      this.user = JSON.parse(
+        atob(sessionStorage.getItem("token").split(".")[1])
+      );
+    }
     this.socket = io("http://localhost:7474");
+    this.socket.emit("identity", this.user);
   },
   mounted: function () {
-    //console.log(this.user);
-          this.socket.on("sending-chat", (data) => {
-        console.log(`esta es el mensaje del back ${JSON.stringify(data) }`);
-        this.message = data.messages;
-        if (!this.chatId) {
-          this.chatId = data.chatId
-          };
-      });
-    console.log("MOUNTED");
-    this.socket.on("message", (data) => {
-      this.message = data;
-      console.log(`esta es la data despues de 10 segundos : ${data}`);
+    this.socket.on("get-receiver", (data) => {
+      this.receiver = data.consultant;
+    });
+    this.socket.on("sending-chat", (data) => {
+      this.message = data.messages;
+      if (!this.chatId) {
+        this.chatId = data.chatId;
+      }
     });
   },
 };

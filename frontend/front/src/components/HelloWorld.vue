@@ -22,6 +22,16 @@
       >
         Button
       </button>
+      <br>
+      <button
+        @click="disconnect"
+        class="btn btn-outline-secondary"
+        type="button"
+        id="button-addon2"
+      >
+        Button
+      </button>
+      
     </div>
   </div>
 </template>
@@ -34,17 +44,18 @@ export default {
     join : function(){
       let user =JSON.parse(atob(sessionStorage.getItem("token").split(".")[1]))
       this.socket.emit("loggedin", {username:user.username})
-      this.socket.emit("want-to-chat")
-      this.socket.on("Consultant", data =>{
-      this.iteration += 1
-      console.log(`data : ${data} iteration ${this.iteration}`)}
-          )
+
 
         // this.socket.emit("private message", this.socket.id, "ping")
         // this.socket.on("private message",(data,d) =>{
         //   console.log("private message")
         //   console.log(data,d)
         // })
+    }
+    ,
+    disconnect: function(){
+      this.socket.disconnect()
+      this.$router.push("/home")
     }
   },
   data: function () {
