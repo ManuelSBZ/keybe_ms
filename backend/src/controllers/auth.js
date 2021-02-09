@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken")
 const config = require("../config")
 const checkJwt = require("../functions/checkJwt")
 const router = Router()
+const tickeModel = require("../models/Ticket")
 
 router.post("/signup", async (req, res) => {
     data = req.body
@@ -77,7 +78,7 @@ router.get("/getToken", async (req, res) => {
             }
             else {
                 let token = jwt.sign({ id: user._id, username: user.username, rol:user.populate().rol }, config.secret, {
-                    expiresIn: 1800
+                    expiresIn: 3600
                 })
                 res.json({ "authenticated": true, token })
 
@@ -89,27 +90,11 @@ router.get("/getToken", async (req, res) => {
 )
 
 
-router.get("/api/foo", async (req, res, next) => {
-    let role = await chatModel.findOne({})
-    // let user = new userModel(
-    //     {
-    //         username: "manue",
-    //         email: "maco@gmail.com",
-    //         password: "1234123",
-    //         rol: role.id
-
-    //     }
-    // )
-    // user.save()
-    // let  role = new rolModel(
-    //     {
-    //         rol:0
-    //     }
-    // )
-    // role.save()
-    // let role = await userModel.findOne({ username: "manues" }).populate("rol")
-    console.log(role)
-    res.json({ "hello": "hola" })
+router.post("/validate/ticket", checkJwt,async (req, res, next) => {
+    const data = req.body 
+    let ticket = await tickeModel.findOne({"ticket":data.ticket}).exec()
+    if (ticket) res.json({validated:true})
+    else res.json({validated:false})
 })
 
 router.get("/validatetoken", checkJwt, (req, res) => {
