@@ -5,9 +5,11 @@
     <router-link to="/login">Login</router-link> |
     <router-link to="/signup">Signup</router-link> |
     <router-link to="/chat">Chat</router-link> | 
+    <router-link to="/ticket/chat">Ticket</router-link> | 
+
+  <router-view />
 
   </div>
-  <router-view />
 </template>
 
 <style>

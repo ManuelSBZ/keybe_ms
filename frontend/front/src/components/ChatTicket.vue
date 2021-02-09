@@ -43,6 +43,7 @@
                   aria-label="Recipient's username"
                   aria-describedby="button-addon2"
                 />
+                                
                 <div class="input-group-append">
                   <button
                     @click="sendMessage"
@@ -52,32 +53,25 @@
                   >
                     Send
                   </button>
-                  <br />
-                  <button
-                    @click="disconnect"
+                  
+                  
+                </div>
+                <div class="input-group mb-3">
+                  <input
+                  v-model="ticketToSend"
+                  type="text"
+                  class="form-control"
+                  placeholder="Recipient's username"
+                  aria-label="Recipient's username"
+                  aria-describedby="button-addon2"
+                />
+                    <button
+                    @click="sendTicket"
                     class="btn btn-outline-secondary"
                     type="button"
                     id="button-addon2"
                   >
-                    disconnet
-                  </button>
-                  <button
-                    v-if="user.rol === '1'"
-                    @click="done"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    done
-                  </button>
-                  <button
-                    v-if="user.rol === '1'"
-                    @click="ticketGeneration"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    ticket
+                    Send
                   </button>
                 </div>
               </div>
@@ -100,11 +94,34 @@ export default {
       socket: {},
       message: [],
       messageToSend: null,
+      ticketToSend:null,
       user: null,
     };
   },
   methods: {
     uuid: uuid,
+    sendTicket:async function(){
+      console.log(this.ticketToSend)
+      let token = sessionStorage.getItem("token")
+      // console.log(token)
+      let response = await fetch(
+        "http://localhost:7474/api/auth/validate/ticket",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-access-token": token
+          },
+          body: JSON.stringify({
+            ticket: this.ticketToSend,
+          }),
+        })
+        response = await response.json()
+      console.log(response)
+      if(response.validated){
+        this.socket.emit("match-chat-ticket", this.user, this.ticketToSend)
+      }
+    },
     sendMessage: async function () {
       this.socket.emit("send-message", {
         message: this.messageToSend,
