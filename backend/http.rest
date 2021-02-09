@@ -1,3 +1,14 @@
+POST  http://localhost:7474/api/auth/validate/ticket
+Content-Type: application/json
+x-access-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwMWRhYTJmNjM3YTczMWY2NDk2N2MzNyIsInVzZXJuYW1lIjoibWFudSIsInJvbCI6IjEiLCJpYXQiOjE2MTI4NDYwODQsImV4cCI6MTYxMjg0OTY4NH0.A_Wn7n5xoO8g7pAttRzkUZ0HSm3C_57PMVb9wS7aQNE
+
+{
+    "ticket":"26bb21a4-b814-4341-96f0-f7addba1ddf4"
+}
+
+
+
+###
 POST  http://localhost:7474/api/auth/signup
 Content-Type: application/json
 
@@ -11,7 +22,7 @@ Content-Type: application/json
 ###
 GET   http://localhost:7474/api/auth/getToken
 Content-Type: application/json
-Authorization: Basic manuel:1234
+Authorization: Basic manu:1234
 
 ###
 GET   http://localhost:7474/api/auth/validatetoken
