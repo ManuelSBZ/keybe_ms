@@ -61,6 +61,14 @@
                   >
                     disconnet
                   </button>
+                   <button
+                    @click="showConsultants"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    id="button-addon2"
+                  >
+                    console
+                  </button>
                   <button
                     v-if="user.rol === '1'"
                     @click="done"
@@ -122,6 +130,10 @@ export default {
       console.log("enviando algo");
       this.socket.emit("generate-ticket", true);
     },
+    showConsultants: function(){
+      console.log("console")
+      this.socket.emit("show-consultants-sockets")
+    }
   },
   watch: {
     $route() {

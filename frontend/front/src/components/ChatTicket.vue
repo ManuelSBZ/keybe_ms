@@ -53,7 +53,22 @@
                   >
                     Send
                   </button>
-                  
+                                      <button
+                    @click="disconnect"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    id="button-addon2"
+                  >
+                    disconnect
+                  </button>
+                                      <button
+                    @click="showConsultants"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    id="button-addon2"
+                  >
+                    console
+                  </button>
                   
                 </div>
                 <div class="input-group mb-3">
@@ -123,22 +138,20 @@ export default {
       }
     },
     sendMessage: async function () {
+      
       this.socket.emit("send-message", {
         message: this.messageToSend,
       });
+      this.messageToSend = null
     },
     disconnect: function () {
       this.socket.disconnect();
       this.$router.push("/login");
     },
-    done: function () {
-      this.socket.emit("done-consultant", true);
-      this.message = [];
-    },
-    ticketGeneration: function () {
-      console.log("enviando algo");
-      this.socket.emit("generate-ticket", true);
-    },
+    showConsultants: function(){
+      console.log("console")
+      this.socket.emit("show-consultants-sockets")
+    }
   },
   watch: {
     $route() {
@@ -154,7 +167,7 @@ export default {
       );
     } else this.$router.push("/login");
     this.socket = io("http://localhost:7474");
-    this.socket.emit("identity", this.user);
+    // this.socket.emit("identity", this.user);
   },
   mounted: function () {
     this.socket.on("sending-chat", (data) => {
