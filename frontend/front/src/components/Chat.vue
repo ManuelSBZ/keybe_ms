@@ -2,7 +2,7 @@
   <div>
     <h3>Chat Keybe</h3>
     <div>
-      <div class="container-fluid bg-success rounded-lg">
+      <div id="containerParent" class="container-fluid p-5">
         <div v-if="status.connected" class="row justify-content-center p-4">
           Connected
         </div>
@@ -11,7 +11,7 @@
         </div>
         <div class="row justify-content-center">
           <div class="col d-flex justify-content-center">
-            <div id="containerChat" class="container bg-light rounded-lg p-3">
+            <div class="container" id="containerChat">
               <div
                 v-bind:class="
                   'row justify-content-' +
@@ -24,11 +24,12 @@
                 <div
                   class="col-6 shadow-lg bg-info text-white rounded-lg p-3 m-3"
                 >
-                  <div id="message">
+                  <div>
                     {{ msg.sender !== "manu" ? msg.sender : msg.message }}:
                     {{ msg.sender === "manu" ? msg.sender : msg.message }}
                   </div>
-                  <div id="date"
+                  <div
+                    id="date"
                     v-bind:class="
                       'd-flex justify-content-' +
                       (msg.sender === user.username ? 'end' : 'left')
@@ -39,61 +40,68 @@
                 </div>
               </div>
               <div v-if="status.writing" id="writing">writing...</div>
-              <div class="input-group mb-3">
-                <input
-                  v-model="messageToSend"
-                  id="messageBox"
-                  @input="imWriting"
-                  type="text"
-                  class="form-control"
-                  placeholder="Recipient's username"
-                  aria-label="Recipient's username"
-                  aria-describedby="button-addon2"
-                />
-                <div class="input-group-append">
-                  <button
-                    @click="sendMessage"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    Send
-                  </button>
-                  <br />
-                  <button
-                    @click="disconnect"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    disconnet
-                  </button>
-                  <button
-                    @click="showConsultants"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    console
-                  </button>
-                  <button
-                    v-if="user.rol === '1'"
-                    @click="done"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    done
-                  </button>
-                  <button
-                    v-if="user.rol === '1'"
-                    @click="ticketGeneration"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    ticket
-                  </button>
+            </div>
+          </div>
+        </div>
+        <div class="row justify-content-center">
+          <div class="col-xl-9 col-lg-10 col-md-11 col-sm-12">
+            <div @keyup.enter="sendMessage" class="input-group mb-3">
+                              <div v-if="user !== null">
+
+              <input
+                v-model="messageToSend"
+                id="messageBox"
+                @input="imWriting"
+                type="text"
+                class="form-control"
+                placeholder="Enter message"
+                aria-label="Enter message"
+                aria-describedby="button-addon2"
+              />
+              <div class="input-group-append">
+                <button
+                  @click="sendMessage"
+                  class="btn-outline-info bg-info text-white"
+                  type="button"
+                  id="button-addon2"
+                >
+                  Send
+                </button>
+                <br />
+                <button
+                  @click="disconnect"
+                  class="btn-outline-info bg-info text-white"
+                  type="button"
+                  id="button-addon2"
+                >
+                  disconnet
+                </button>
+                <button
+                  @click="showConsultants"
+                  class="btn-outline-info bg-info text-white"
+                  type="button"
+                  id="button-addon2"
+                >
+                  console
+                </button>
+                <button
+                  v-if="(user.rol) === '1'"
+                  @click="done"
+                  class="btn-outline-info bg-info text-white"
+                  type="button"
+                  id="button-addon2"
+                >
+                  done
+                </button>
+                <button
+                  v-if="user.rol === '1'"
+                  @click="ticketGeneration"
+                  class="btn-outline-info bg-info text-white"
+                  type="button"
+                  id="button-addon2"
+                >
+                  ticket
+                </button>
                 </div>
               </div>
             </div>
@@ -120,7 +128,7 @@ export default {
       message: [],
       messageToSend: null,
       user: null,
-      toggle:false
+      toggle: false,
     };
   },
   methods: {
@@ -129,13 +137,17 @@ export default {
       this.socket.emit("send-message", {
         message: this.messageToSend,
       });
-      this.toggle =!this.toggle
+      this.toggle = !this.toggle;
+      setTimeout(() => {
+        let chatContainer = document.getElementById("containerChat");
+        chatContainer.scrollTop =
+          chatContainer.scrollHeight + window.innerHeight;
+      }, 500);
     },
-    imWriting:function(){
-      console.log(this.messageToSend.length)
-      this.socket.emit("writing",this.messageToSend.length)
-    }
-    ,
+    imWriting: function () {
+      console.log(this.messageToSend.length);
+      this.socket.emit("writing", this.messageToSend.length);
+    },
     disconnect: function () {
       this.socket.disconnect();
       this.$router.push("/login");
@@ -147,6 +159,11 @@ export default {
     ticketGeneration: function () {
       console.log("enviando algo");
       this.socket.emit("generate-ticket", true);
+      setTimeout(() => {
+        let chatContainer = document.getElementById("containerChat");
+        chatContainer.scrollTop =
+          chatContainer.scrollHeight + window.innerHeight;
+      }, 500);
     },
     showConsultants: function () {
       console.log("console");
@@ -158,12 +175,11 @@ export default {
       console.log("usuario desconectado por cambiar de vista");
       this.socket.disconnect();
     },
-    toggle(){
-      this.status.writing=false
-      this.messageToSend=""
-      this.socket.emit("writing",this.messageToSend.length)
-
-    }
+    toggle() {
+      this.status.writing = false;
+      this.messageToSend = "";
+      this.socket.emit("writing", this.messageToSend.length);
+    },
   },
 
   created: function () {
@@ -184,24 +200,30 @@ export default {
       if (!data) this.status.connected = false;
       else this.status.connected = true;
     });
-    this.socket.on("setWriting", data=>{
-      if(data)this.status.writing = true;
+    this.socket.on("setWriting", (data) => {
+      if (data) this.status.writing = true;
       else this.status.writing = false;
-    })
+    });
   },
 };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-/* #containerChat{
-background: white;
+#containerParent {
+  background: rgb(255, 255, 255);
+  border-radius: 10px 40px 40px 40px;
+}
+#containerChat {
+  background: rgb(248, 244, 244);
   height: 50vh;
+  border-radius: 10px 40px 40px 40px;
   padding: 1em;
   overflow: auto;
-  max-width: 350px;
+  max-width: 1000px;
   margin: 0 auto 2em auto;
-  box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3)} */
+  box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3);
+}
 
 h3 {
   margin: 40px 0 0;

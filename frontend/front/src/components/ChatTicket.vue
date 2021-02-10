@@ -2,7 +2,7 @@
   <div>
     <h3>Chat Keybe</h3>
     <div>
-      <div class="container-fluid bg-success rounded-lg">
+      <div id="containerParent" class="container-fluid p-5">
         <div v-if="status.connected" class="row justify-content-center p-4">
           Connected
         </div>
@@ -11,7 +11,7 @@
         </div>
         <div class="row justify-content-center">
           <div class="col d-flex justify-content-center">
-            <div id="containerChat" class="container bg-light rounded-lg p-3">
+            <div id="containerChat" class="container bg-light p-3">
               <div
                 v-bind:class="
                   'row justify-content-' +
@@ -24,7 +24,9 @@
                 <div
                   class="col-6 shadow-lg bg-info text-white rounded-lg p-3 m-3"
                 >
-                  <div id="message">
+                  <div 
+                  v-bind:class="'d-flex justify-content-'+(msg.sender === user.username ? 'end' : 'left')" 
+                  id="message">
                     {{ msg.sender !== "manu" ? msg.sender : msg.message }}:
                     {{ msg.sender === "manu" ? msg.sender : msg.message }}
                   </div>
@@ -40,62 +42,65 @@
                 </div>
               </div>
               <div v-if="status.writing" id="writing">writing...</div>
+            </div>
+          </div>
+        </div>
+        <div class="row justify-content-center">
+          <div class="col-xl-9 col-lg-10 col-md-11 col-sm-12">
+            <div @keyup.enter="sendMessage" class="input-group mb-3">
+              <input
+                v-model="messageToSend"
+                @input="imWriting"
+                type="text"
+                class="form-control"
+                placeholder="Enter message"
+                aria-label="Enter message"
+                aria-describedby="button-addon2"
+              />
 
+              <div class="input-group-append">
+                <button
+                  @click="sendMessage"
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="button-addon2"
+                >
+                  Send
+                </button>
+                <button
+                  @click="disconnect"
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="button-addon2"
+                >
+                  disconnect
+                </button>
+                <button
+                  @click="showConsultants"
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="button-addon2"
+                >
+                  console
+                </button>
+              </div>
               <div class="input-group mb-3">
                 <input
-                  v-model="messageToSend"
-                  @input="imWriting"
+                  v-model="ticketToSend"
                   type="text"
                   class="form-control"
-                  placeholder="Recipient's username"
-                  aria-label="Recipient's username"
+                  placeholder="Enter ticket"
+                  aria-label="Enter ticket"
                   aria-describedby="button-addon2"
                 />
-
-                <div class="input-group-append">
-                  <button
-                    @click="sendMessage"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    Send
-                  </button>
-                  <button
-                    @click="disconnect"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    disconnect
-                  </button>
-                  <button
-                    @click="showConsultants"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    console
-                  </button>
-                </div>
-                <div class="input-group mb-3">
-                  <input
-                    v-model="ticketToSend"
-                    type="text"
-                    class="form-control"
-                    placeholder="Recipient's username"
-                    aria-label="Recipient's username"
-                    aria-describedby="button-addon2"
-                  />
-                  <button
-                    @click="sendTicket"
-                    class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon2"
-                  >
-                    Send
-                  </button>
-                </div>
+                <button
+                  @click="sendTicket"
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="button-addon2"
+                >
+                  Send
+                </button>
               </div>
             </div>
           </div>
@@ -122,6 +127,7 @@ export default {
       messageToSend: null,
       ticketToSend: null,
       user: null,
+      toggle: false,
     };
   },
   methods: {
@@ -158,6 +164,11 @@ export default {
         message: this.messageToSend,
       });
       this.toggle = !this.toggle;
+      setTimeout(() => {
+        let chatContainer = document.getElementById("containerChat");
+        chatContainer.scrollTop =
+          chatContainer.scrollHeight + window.innerHeight;
+      }, 500);
     },
     disconnect: function () {
       this.socket.disconnect();
@@ -212,8 +223,19 @@ export default {
 h3 {
   margin: 40px 0 0;
 }
-#containerChat{
-  overflow-y: scroll
+#containerParent {
+  background: rgb(255, 255, 255);
+  border-radius: 10px 40px 40px 40px;
+}
+#containerChat {
+  background: rgb(248, 244, 244);
+  height: 50vh;
+  border-radius: 10px 40px 40px 40px;
+  padding: 1em;
+  overflow: auto;
+  max-width: 1000px;
+  margin: 0 auto 2em auto;
+  box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3);
 }
 ul {
   list-style-type: none;

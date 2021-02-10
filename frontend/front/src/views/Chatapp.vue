@@ -8,11 +8,12 @@
 // @ is an alias to /src
 import Chat from "@/components/Chat.vue";
 export default {
-  name: "Chatapp",
+  name: "app",
   components: {
     Chat
   },
   beforeRouteEnter:async function(to, from, next){
+    console.log("iniiiiiiiiiiiiiicioooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
     const token = sessionStorage.getItem("token")
         const response = await fetch("http://localhost:7474/api/auth/validatetoken", {
         method: "GET",
@@ -23,7 +24,7 @@ export default {
       });
     const result = await response.json()
     next(async (vue) => {
-      if (!token) {
+      if (!token || token ==="") {
         alert("You must login");
         vue.$router.push("/login");
       } else vue.$router.push(to.path);
@@ -32,7 +33,8 @@ export default {
         vue.$router.push("/login");
       } else vue.$router.push(to.path);
     })
+       console.log("finnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn")
+
   }
-   
 };
 </script>
