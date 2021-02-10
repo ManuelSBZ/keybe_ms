@@ -11,7 +11,7 @@
         </div>
         <div class="row justify-content-center">
           <div class="col d-flex justify-content-center">
-            <div class="container bg-light rounded-lg p-3">
+            <div id="containerChat" class="container bg-light rounded-lg p-3">
               <div
                 v-bind:class="
                   'row justify-content-' +
@@ -194,6 +194,15 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+/* #containerChat{
+background: white;
+  height: 50vh;
+  padding: 1em;
+  overflow: auto;
+  max-width: 350px;
+  margin: 0 auto 2em auto;
+  box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3)} */
+
 h3 {
   margin: 40px 0 0;
 }

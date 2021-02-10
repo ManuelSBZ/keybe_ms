@@ -128,6 +128,7 @@ io.on('connection', (socket) => {
                 console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
                 // console.log(`${}`)
                 io.to(chatFound.chatId).emit("sending-chat", chatFound)
+                io.to(chatFound.chatId).emit("connected",true)//eliminar
             } else console.log("no match tickettttttttttttt")
         })
     })

@@ -3,9 +3,15 @@
     <h3>Chat Keybe</h3>
     <div>
       <div class="container-fluid bg-success rounded-lg">
+        <div v-if="status.connected" class="row justify-content-center p-4">
+          Connected
+        </div>
+        <div v-else class="row justify-content-center">
+          Disconnected please wait
+        </div>
         <div class="row justify-content-center">
           <div class="col d-flex justify-content-center">
-            <div class="container bg-light rounded-lg p-3">
+            <div id="containerChat" class="container bg-light rounded-lg p-3">
               <div
                 v-bind:class="
                   'row justify-content-' +
@@ -31,19 +37,21 @@
                   >
                     <strong>{{ msg.date }}</strong>
                   </div>
-                  <div id="actions"></div>
                 </div>
               </div>
+              <div v-if="status.writing" id="writing">writing...</div>
+
               <div class="input-group mb-3">
                 <input
                   v-model="messageToSend"
+                  @input="imWriting"
                   type="text"
                   class="form-control"
                   placeholder="Recipient's username"
                   aria-label="Recipient's username"
                   aria-describedby="button-addon2"
                 />
-                                
+
                 <div class="input-group-append">
                   <button
                     @click="sendMessage"
@@ -53,7 +61,7 @@
                   >
                     Send
                   </button>
-                                      <button
+                  <button
                     @click="disconnect"
                     class="btn btn-outline-secondary"
                     type="button"
@@ -61,7 +69,7 @@
                   >
                     disconnect
                   </button>
-                                      <button
+                  <button
                     @click="showConsultants"
                     class="btn btn-outline-secondary"
                     type="button"
@@ -69,18 +77,17 @@
                   >
                     console
                   </button>
-                  
                 </div>
                 <div class="input-group mb-3">
                   <input
-                  v-model="ticketToSend"
-                  type="text"
-                  class="form-control"
-                  placeholder="Recipient's username"
-                  aria-label="Recipient's username"
-                  aria-describedby="button-addon2"
-                />
-                    <button
+                    v-model="ticketToSend"
+                    type="text"
+                    class="form-control"
+                    placeholder="Recipient's username"
+                    aria-label="Recipient's username"
+                    aria-describedby="button-addon2"
+                  />
+                  <button
                     @click="sendTicket"
                     class="btn btn-outline-secondary"
                     type="button"
@@ -106,18 +113,22 @@ export default {
   name: "Chat",
   data: function () {
     return {
+      status: {
+        connected: null,
+        writing: null,
+      },
       socket: {},
       message: [],
       messageToSend: null,
-      ticketToSend:null,
+      ticketToSend: null,
       user: null,
     };
   },
   methods: {
     uuid: uuid,
-    sendTicket:async function(){
-      console.log(this.ticketToSend)
-      let token = sessionStorage.getItem("token")
+    sendTicket: async function () {
+      console.log(this.ticketToSend);
+      let token = sessionStorage.getItem("token");
       // console.log(token)
       let response = await fetch(
         "http://localhost:7474/api/auth/validate/ticket",
@@ -125,38 +136,47 @@ export default {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-access-token": token
+            "x-access-token": token,
           },
           body: JSON.stringify({
             ticket: this.ticketToSend,
           }),
-        })
-        response = await response.json()
-      console.log(response)
-      if(response.validated){
-        this.socket.emit("match-chat-ticket", this.user, this.ticketToSend)
+        }
+      );
+      response = await response.json();
+      console.log(response);
+      if (response.validated) {
+        this.socket.emit("match-chat-ticket", this.user, this.ticketToSend);
       }
     },
+    imWriting: function () {
+      console.log(this.messageToSend.length);
+      this.socket.emit("writing", this.messageToSend.length);
+    },
     sendMessage: async function () {
-      
       this.socket.emit("send-message", {
         message: this.messageToSend,
       });
-      this.messageToSend = null
+      this.toggle = !this.toggle;
     },
     disconnect: function () {
       this.socket.disconnect();
       this.$router.push("/login");
     },
-    showConsultants: function(){
-      console.log("console")
-      this.socket.emit("show-consultants-sockets")
-    }
+    showConsultants: function () {
+      console.log("console");
+      this.socket.emit("show-consultants-sockets");
+    },
   },
   watch: {
     $route() {
       console.log("usuario desconectado por cambiar de vista");
       this.socket.disconnect();
+    },
+    toggle() {
+      this.status.writing = false;
+      this.messageToSend = "";
+      this.socket.emit("writing", this.messageToSend.length);
     },
   },
 
@@ -174,6 +194,15 @@ export default {
       this.message = data.messages;
       console.log(`this is the chat : ${JSON.stringify(data.messages)}`);
     });
+    this.socket.on("connected", (data) => {
+      console.log("EVENTO CONNECTEEED TICKET");
+      if (!data) this.status.connected = false;
+      else this.status.connected = true;
+    });
+    this.socket.on("setWriting", (data) => {
+      if (data) this.status.writing = true;
+      else this.status.writing = false;
+    });
   },
 };
 </script>
@@ -182,6 +211,9 @@ export default {
 <style scoped>
 h3 {
   margin: 40px 0 0;
+}
+#containerChat{
+  overflow-y: scroll
 }
 ul {
   list-style-type: none;
