@@ -25,7 +25,7 @@
                   class="col-6 shadow-lg bg-info text-white rounded-lg p-3 m-3"
                 >
                   <div>
-                    {{ msg.sender !== "manu" ? msg.sender : msg.message }}:
+                    {{ msg.sender !== "manu" ? msg.sender : msg.message }} :
                     {{ msg.sender === "manu" ? msg.sender : msg.message }}
                   </div>
                   <div
@@ -45,8 +45,7 @@
         </div>
         <div class="row justify-content-center">
           <div class="col-xl-9 col-lg-10 col-md-11 col-sm-12">
-            <div @keyup.enter="sendMessage" class="input-group mb-3">
-                              <div v-if="user !== null">
+            <div v-if="user !== null" @keyup.enter="sendMessage" class="input-group mb-3">
 
               <input
                 v-model="messageToSend"
@@ -102,7 +101,6 @@
                 >
                   ticket
                 </button>
-                </div>
               </div>
             </div>
           </div>

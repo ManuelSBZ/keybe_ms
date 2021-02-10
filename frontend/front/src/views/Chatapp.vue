@@ -8,12 +8,11 @@
 // @ is an alias to /src
 import Chat from "@/components/Chat.vue";
 export default {
-  name: "app",
+  name: "Chatapp",
   components: {
     Chat
   },
   beforeRouteEnter:async function(to, from, next){
-    console.log("iniiiiiiiiiiiiiicioooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
     const token = sessionStorage.getItem("token")
         const response = await fetch("http://localhost:7474/api/auth/validatetoken", {
         method: "GET",
