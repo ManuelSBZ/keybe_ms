@@ -3,6 +3,12 @@
     <h3>Chat Keybe</h3>
     <div>
       <div class="container-fluid bg-success rounded-lg">
+        <div v-if="status.connected" class="row justify-content-center p-4">
+          Connected
+        </div>
+        <div v-else class="row justify-content-center">
+          Disconnected please wait
+        </div>
         <div class="row justify-content-center">
           <div class="col d-flex justify-content-center">
             <div class="container bg-light rounded-lg p-3">
@@ -22,21 +28,22 @@
                     {{ msg.sender !== "manu" ? msg.sender : msg.message }}:
                     {{ msg.sender === "manu" ? msg.sender : msg.message }}
                   </div>
-                  <div
+                  <div id="date"
                     v-bind:class="
                       'd-flex justify-content-' +
                       (msg.sender === user.username ? 'end' : 'left')
                     "
-                    id="date"
                   >
                     <strong>{{ msg.date }}</strong>
                   </div>
-                  <div id="actions"></div>
                 </div>
               </div>
+              <div v-if="status.writing" id="writing">writing...</div>
               <div class="input-group mb-3">
                 <input
                   v-model="messageToSend"
+                  id="messageBox"
+                  @input="imWriting"
                   type="text"
                   class="form-control"
                   placeholder="Recipient's username"
@@ -61,7 +68,7 @@
                   >
                     disconnet
                   </button>
-                   <button
+                  <button
                     @click="showConsultants"
                     class="btn btn-outline-secondary"
                     type="button"
@@ -105,10 +112,15 @@ export default {
   name: "Chat",
   data: function () {
     return {
+      status: {
+        connected: null,
+        writing: null,
+      },
       socket: {},
       message: [],
       messageToSend: null,
       user: null,
+      toggle:false
     };
   },
   methods: {
@@ -117,7 +129,13 @@ export default {
       this.socket.emit("send-message", {
         message: this.messageToSend,
       });
+      this.toggle =!this.toggle
     },
+    imWriting:function(){
+      console.log(this.messageToSend.length)
+      this.socket.emit("writing",this.messageToSend.length)
+    }
+    ,
     disconnect: function () {
       this.socket.disconnect();
       this.$router.push("/login");
@@ -130,16 +148,22 @@ export default {
       console.log("enviando algo");
       this.socket.emit("generate-ticket", true);
     },
-    showConsultants: function(){
-      console.log("console")
-      this.socket.emit("show-consultants-sockets")
-    }
+    showConsultants: function () {
+      console.log("console");
+      this.socket.emit("show-consultants-sockets");
+    },
   },
   watch: {
     $route() {
       console.log("usuario desconectado por cambiar de vista");
       this.socket.disconnect();
     },
+    toggle(){
+      this.status.writing=false
+      this.messageToSend=""
+      this.socket.emit("writing",this.messageToSend.length)
+
+    }
   },
 
   created: function () {
@@ -156,6 +180,14 @@ export default {
       this.message = data.messages;
       console.log(`this is the chat : ${JSON.stringify(data.messages)}`);
     });
+    this.socket.on("connected", (data) => {
+      if (!data) this.status.connected = false;
+      else this.status.connected = true;
+    });
+    this.socket.on("setWriting", data=>{
+      if(data)this.status.writing = true;
+      else this.status.writing = false;
+    })
   },
 };
 </script>

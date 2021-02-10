@@ -1,6 +1,5 @@
 <template>
   <div class="login">
-    <img alt="Vue logo" src="../assets/logo.png" />
     <SignupPanel msg="SignUp" />
   </div>
 </template>

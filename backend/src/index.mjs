@@ -1,34 +1,26 @@
-import Express from "express"
 import http from "http"
 import app from "./app"
 import socketio from "socket.io"
-import uuid from "./functions/uuid"
-import { default as jwt } from "jsonwebtoken"
 import { default as connection } from "./database"
 import { default as auth } from "./controllers/auth"
-import userModel from "./models/User"
 import ticketModel from "./models/Ticket"
-import stackModel from "./models/stack"
-import rolModel from "./models/Rol"
 import chatModel from "./models/Chat"
-import { default as Schema } from "./models/Schema2"
 import messageModel from "./models/Message"
-import { default as model } from "./models/Model2"
 
 
 
 const server = http.createServer(app)
 const port = 7474
 
-const io = socketio(server, 
+const io = socketio(server,
     {
-    cors: {
-        origin: "http://localhost:8080",
-        methods: ["GET", "POST", "PACTH", "PUT", "DELETE"],
-        allow_headers: ["x-access-token"],
-        credentials: true
+        cors: {
+            origin: "http://localhost:8080",
+            methods: ["GET", "POST", "PACTH", "PUT", "DELETE"],
+            allow_headers: ["x-access-token"],
+            credentials: true
+        }
     }
-}
 )
 
 server.listen(port)
@@ -42,47 +34,68 @@ io.on('connection', (socket) => {
         sockets[socket.id] = socket
         console.log(`se conectado el socket : ${socket.id} - ${socket.username}`)
 
-        if (String(user.rol) === "1") {
+        if (String(user.rol) === "1" && waiting.length === 0) {
             //Consultants
             console.log(`this is the user${JSON.stringify(user)}`)
-            let consultant = { [user.username]: socket.id }
             console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
-            consultants.able = { ...consultants.able, ...consultant }
+            consultants.able[user.username] = socket.id
             console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
-        } else {
-            if (Object.entries(consultants.able).length > 0 && Object.entries(sockets).length > 0) {
-                //Basics
-                const chat = new chatModel({})
-                chat.save((error, chatCreated) => {
-                    console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
-                    console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
-                    if (error) console.log(error)
-                    console.log(`JOIN TO CHAT WITH ID ${chatCreated.chatId}`)
-                    socket.join(chatCreated.chatId) // sincronizar cliente
-                    let consultant = Object.entries(consultants.able)[0]
-                    const USERNAME = consultant[0]
-                    const ID = consultant[1]
-                    delete consultants.able[USERNAME]
-                    consultants.unable[USERNAME] = chatCreated.chatId
-                    const suporter = sockets[ID]
-                    // console.log(`CONSULTANT ID ${ID}, CONSULTANT ${consultant.length}, SOCKET ${.length}`)
-                    suporter.join(chatCreated.chatId)// sincronizar cliente
-                    suporter.receiver = socket.username
-                    suporter.receiverId = socket.id
-                    suporter.chatId = chatCreated.chatId
-                    socket.receiver = suporter.username
-                    socket.receiverId = suporter.id
-                    socket.chatId = chatCreated.chatId
-                    console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
-                    console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
-                })
-            } else {
+            io.to(socket.id).emit("connected",false)//eliminar
 
-                console.log("there is not consultant")
+        }
+        if (String(user.rol) === "1" && waiting.length > 0) {
+            console.log("CONSULTOR Y BASIC USERRRRRRRRRRRRRRRRRRRRRRRRRRRR")
+            const chat = new chatModel({})
+            chat.save((error, chatCreated) => {
+                if (error) console.log(error)
+                const userBasic = waiting.shift()
+                socket.join(chatCreated.chatId)// sincronizar cliente
+                socket.receiver = userBasic.username
+                socket.receiverId = userBasic.id
+                socket.chatId = chatCreated.chatId
+                userBasic.join(chatCreated.chatId)// sincronizar cliente
+                userBasic.receiver = socket.username
+                userBasic.receiverId = socket.id
+                userBasic.chatId = chatCreated.chatId
+                consultants.unable[socket.username] = chatCreated.chatId
+                io.to(chatCreated.chatId).emit("connected",true)//eliminar
+            })
+
+        }
+        if (String(user.rol) === "0" && Object.entries(consultants.able).length > 0) {
+            //Basics
+            const chat = new chatModel({})
+            chat.save((error, chatCreated) => {
+                console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
                 console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
-                waiting.push(socket)
+                if (error) console.log(error)
+                console.log(`JOIN TO CHAT WITH ID ${chatCreated.chatId}`)
+                socket.join(chatCreated.chatId) // sincronizar cliente
+                let consultant = Object.entries(consultants.able)[0]
+                const [USERNAME, ID] = [consultant[0], consultant[1]]
+                delete consultants.able[USERNAME]
+                consultants.unable[USERNAME] = chatCreated.chatId
+                const consultantSocket = sockets[ID]
+                // console.log(`CONSULTANT ID ${ID}, CONSULTANT ${consultant.length}, SOCKET ${.length}`)
+                consultantSocket.join(chatCreated.chatId)// sincronizar cliente
+                consultantSocket.receiver = socket.username
+                consultantSocket.receiverId = socket.id
+                consultantSocket.chatId = chatCreated.chatId
+                socket.receiver = consultantSocket.username
+                socket.receiverId = consultantSocket.id
+                socket.chatId = chatCreated.chatId
+                io.to(chatCreated.chatId).emit("connected",true)//eliminar
+                console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
+                console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
+            })
+        }
+        if (String(user.rol) === "0") {
 
-            }
+            console.log("there is not consultant")
+            console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
+            waiting.push(socket)
+            io.to(socket.id).emit("connected",false)//eliminar
+
         }
 
     })
@@ -103,13 +116,13 @@ io.on('connection', (socket) => {
                 const ID = consultant[1]
                 delete consultants.able[USERNAME]
                 consultants.unable[USERNAME] = chatFound.chatId
-                const suporter = sockets[ID]
-                suporter.join(chatFound.chatId)// sincronizar cliente
-                suporter.receiver = socket.username
-                suporter.receiverId = socket.id
-                suporter.chatId = chatFound.chatId
-                socket.receiver = suporter.username
-                socket.receiverId = suporter.id
+                const consultantSocket = sockets[ID]
+                consultantSocket.join(chatFound.chatId)// sincronizar cliente
+                consultantSocket.receiver = socket.username
+                consultantSocket.receiverId = socket.id
+                consultantSocket.chatId = chatFound.chatId
+                socket.receiver = consultantSocket.username
+                socket.receiverId = consultantSocket.id
                 socket.chatId = chatFound.chatId
                 console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
                 console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
@@ -120,6 +133,7 @@ io.on('connection', (socket) => {
     })
     socket.on("show-consultants-sockets", () => {
         console.log("show-consultants-sockets")
+        console.log(`waiting size : ${waiting.length}`)
         console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
         console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
     })
@@ -138,29 +152,31 @@ io.on('connection', (socket) => {
             console.log(`sending message to existing chat ${data.message}`)
             const chat = await chatModel.findOne({ "chatId": socket.chatId })
                 .populate("messages")
-                .exec(async (error, chatFounded) => {
+                .exec(async (error, chatFound) => {
                     if (error) console.log(error)
-                    chatFounded.messages.push(message)
-                    chatFounded.save()
-                    io.to(socket.chatId).emit("sending-chat", chatFounded)
+                    chatFound.messages.push(message)
+                    chatFound.save()
+                    io.to(socket.chatId).emit("sending-chat", chatFound)
                 }
 
                 )
         }
 
-
     })
-
+    socket.on("writing", length=>{
+        if (length>0) socket.broadcast.to(socket.chatId).emit("setWriting",true)
+        else socket.broadcast.to(socket.chatId).emit("setWriting",false)
+    }) 
 
     socket.on("generate-ticket", () => {
         chatModel.findOne({ "chatId": socket.chatId })
             .populate("messages")
-            .exec(async (error, chatFounded) => {
+            .exec(async (error, chatFound) => {
                 console.log("dentro de exec")
                 if (error) console.log(error)
                 let ticketObject = new ticketModel(
                     {
-                        chat: chatFounded
+                        chat: chatFound
                     }
                 )
                 console.log(`going to save ticketObject ${JSON.stringify(ticketObject)}`)
@@ -175,12 +191,12 @@ io.on('connection', (socket) => {
                     console.log(`going to save messageticket ${JSON.stringify(messageTicket)}`)
 
                     await messageTicket.save(async (error, msg) => {
-                        chatFounded.messages.push(messageTicket)
-                        chatFounded.ticket = ticketObject.toJSON().ticket
-                        console.log(`going to save chatFounded ${JSON.stringify(chatFounded)}`)
+                        chatFound.messages.push(messageTicket)
+                        chatFound.ticket = ticketObject.toJSON().ticket
+                        console.log(`going to save chatFound ${JSON.stringify(chatFound)}`)
 
-                        await chatFounded.save()
-                        io.to(socket.chatId).emit("sending-chat", chatFounded)
+                        await chatFound.save()
+                        io.to(socket.chatId).emit("sending-chat", chatFound)
 
                     })
 
@@ -201,7 +217,6 @@ io.on('connection', (socket) => {
         console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
     })
 
-
     socket.on("disconnect", async () => {
         console.log(`${socket.username}:${socket.id} has left the party.`);
         if (consultants.able.hasOwnProperty(socket.username)) {
@@ -210,7 +225,6 @@ io.on('connection', (socket) => {
             console.log(`actual list of consultants: ${JSON.stringify(consultants)}`)
             delete consultants.able[socket.username]
             delete consultants.unable[socket.username] // problema desaparece de la lista
-
             console.log(`actual constultant's list ${JSON.stringify(consultants)}`)
         } else if (consultants.unable.hasOwnProperty(socket.username)) {
             console.log("CONSULTANT LEFT THE ROOM")
@@ -219,18 +233,18 @@ io.on('connection', (socket) => {
             console.log(`actual list of consultants: ${JSON.stringify(consultants)}`)
             delete consultants.unable[socket.username] // problema desaparece de la lista
             delete consultants.able[socket.username] // problema desaparece de la lista
-
             console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
         } else if (socket.receiver) {
             console.log("BASIC LEFT THE ROOM")
             console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
             consultants.able = socket.receiverId in sockets ? { ...consultants.able, [socket.receiver]: socket.receiverId } : consultants.able
             delete consultants.unable[socket.receiver]
-
+            waiting.shift()
             console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
 
         }
         console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
+        io.to(socket.chatId).emit("connected",false)
         delete sockets[socket.id]
         console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
 
