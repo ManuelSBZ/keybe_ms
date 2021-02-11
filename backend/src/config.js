@@ -1,3 +1,4 @@
+const uuid = require("../src/functions/uuid")
 module.exports = {
-    secret:"fvbklbuigñlyfñ"
+    secret: uuid()
 }

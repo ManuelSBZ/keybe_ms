@@ -88,8 +88,7 @@ io.on('connection', (socket) => {
                 console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
                 console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
             })
-        }
-        if (String(user.rol) === "0") {
+        }else if (String(user.rol) === "0") {
 
             console.log("there is not consultant")
             console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
@@ -209,14 +208,6 @@ io.on('connection', (socket) => {
 
     }
     )
-    socket.on("done-consultant", data => {
-        console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
-        consultants.able = { ...consultants.able, [socket.username]: socket.id }
-        delete consultants.unable[socket.username]
-        // consultants.unable[socket.username] = socket.id
-        // consultants.able = { ...consultants.able, ...consultants.unable[socket.username] }
-        console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
-    })
 
     socket.on("disconnect", async () => {
         console.log(`${socket.username}:${socket.id} has left the party.`);
@@ -243,7 +234,7 @@ io.on('connection', (socket) => {
             waiting.shift()
             console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
 
-        }
+        }else waiting.shift()
         console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
         io.to(socket.chatId).emit("connected",false)
         delete sockets[socket.id]

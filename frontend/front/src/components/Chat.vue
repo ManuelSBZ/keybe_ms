@@ -45,8 +45,11 @@
         </div>
         <div class="row justify-content-center">
           <div class="col-xl-9 col-lg-10 col-md-11 col-sm-12">
-            <div v-if="user !== null" @keyup.enter="sendMessage" class="input-group mb-3">
-
+            <div
+              v-if="user !== null"
+              @keyup.enter="sendMessage"
+              class="input-group mb-3"
+            >
               <input
                 v-model="messageToSend"
                 id="messageBox"
@@ -84,7 +87,7 @@
                   console
                 </button>
                 <button
-                  v-if="(user.rol) === '1'"
+                  v-if="user.rol === '1'"
                   @click="done"
                   class="btn-outline-info bg-info text-white"
                   type="button"
@@ -132,29 +135,29 @@ export default {
   methods: {
     uuid: uuid,
     sendMessage: async function () {
+      if(this.status.connected){
       this.socket.emit("send-message", {
         message: this.messageToSend,
       });
       this.toggle = !this.toggle;
-      setTimeout(() => {
-        let chatContainer = document.getElementById("containerChat");
-        chatContainer.scrollTop =
-          chatContainer.scrollHeight + window.innerHeight;
-      }, 500);
+      }
     },
     imWriting: function () {
+      if(this.status.connected){
       console.log(this.messageToSend.length);
       this.socket.emit("writing", this.messageToSend.length);
+      }
     },
     disconnect: function () {
       this.socket.disconnect();
       this.$router.push("/login");
     },
     done: function () {
-      this.socket.emit("done-consultant", true);
-      this.message = [];
+      // this.socket.emit("done-consultant", true);
+      this.message = this.status.connected ?this.message: []
     },
     ticketGeneration: function () {
+      if(this.status.connected){
       console.log("enviando algo");
       this.socket.emit("generate-ticket", true);
       setTimeout(() => {
@@ -162,6 +165,7 @@ export default {
         chatContainer.scrollTop =
           chatContainer.scrollHeight + window.innerHeight;
       }, 500);
+      }
     },
     showConsultants: function () {
       console.log("console");
@@ -177,6 +181,13 @@ export default {
       this.status.writing = false;
       this.messageToSend = "";
       this.socket.emit("writing", this.messageToSend.length);
+    },
+    message() {
+      setTimeout(() => {
+        let chatContainer = document.getElementById("containerChat");
+        chatContainer.scrollTop =
+          chatContainer.scrollHeight + window.innerHeight;
+      }, 400);
     },
   },
 

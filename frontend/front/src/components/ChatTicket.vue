@@ -156,19 +156,18 @@ export default {
       }
     },
     imWriting: function () {
+      if(this.status.connected){
       console.log(this.messageToSend.length);
       this.socket.emit("writing", this.messageToSend.length);
+      }
     },
     sendMessage: async function () {
+      if(this.status.connected){
       this.socket.emit("send-message", {
         message: this.messageToSend,
       });
       this.toggle = !this.toggle;
-      setTimeout(() => {
-        let chatContainer = document.getElementById("containerChat");
-        chatContainer.scrollTop =
-          chatContainer.scrollHeight + window.innerHeight;
-      }, 500);
+      }
     },
     disconnect: function () {
       this.socket.disconnect();
@@ -188,6 +187,13 @@ export default {
       this.status.writing = false;
       this.messageToSend = "";
       this.socket.emit("writing", this.messageToSend.length);
+    },
+        message() {
+      setTimeout(() => {
+        let chatContainer = document.getElementById("containerChat");
+        chatContainer.scrollTop =
+          chatContainer.scrollHeight + window.innerHeight;
+      }, 400);
     },
   },
 
