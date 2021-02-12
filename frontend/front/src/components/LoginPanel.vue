@@ -97,6 +97,8 @@ export default {
       if(result.authenticated){
         sessionStorage.setItem("token",result.token)
         this.$router.push("/")
+      }else{
+        alert("not authenticated")
       }
       console.log(result.authenticated,result.token)
     }
