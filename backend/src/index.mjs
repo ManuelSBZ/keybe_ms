@@ -220,9 +220,9 @@ io.on('connection', (socket) => {
             console.log(`actual constultant's list ${JSON.stringify(consultants)}`)
         } else if (consultants.unable.hasOwnProperty(socket.username)) {
             console.log("CONSULTANT LEFT THE ROOM")
-
             console.log(`disconnect: ${socket.username}`)
             console.log(`actual list of consultants: ${JSON.stringify(consultants)}`)
+            waiting.push(sockets[socket.receiver])
             delete consultants.unable[socket.username] // problema desaparece de la lista
             delete consultants.able[socket.username] // problema desaparece de la lista
             console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
