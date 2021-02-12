@@ -222,7 +222,7 @@ io.on('connection', (socket) => {
             console.log("CONSULTANT LEFT THE ROOM")
             console.log(`disconnect: ${socket.username}`)
             console.log(`actual list of consultants: ${JSON.stringify(consultants)}`)
-            waiting.push(sockets[socket.receiver])
+            waiting.push(sockets[socket.receiverId])
             delete consultants.unable[socket.username] // problema desaparece de la lista
             delete consultants.able[socket.username] // problema desaparece de la lista
             console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
