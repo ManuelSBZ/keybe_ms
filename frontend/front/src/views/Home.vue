@@ -13,11 +13,12 @@ export default {
   components: {
     HelloWorld,
   },
-  data() {
-    return {
-      authenticated: false,
-    };
-  },
+  // data() {
+  //   return {
+  //     authenticated: false,
+  //   };
+  // },
+
   // created: function(){
   // }
   // beforeRouteEnter: async function(){
@@ -41,29 +42,31 @@ export default {
   // }
   // ,
 
-  beforeRouteEnter: async function (to, from, next) {
-    const token = sessionStorage.getItem("token");
-    const response = await fetch(
-      "http://localhost:7474/api/auth/validatetoken",
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "x-access-token": `${token}`,
-        },
-      }
-    );
-    const result = await response.json();
-    next(async (vue) => {
-      if (!token) {
-        alert("You must login");
-        vue.$router.push("/login");
-      } else vue.$router.push(to.path);
-      if (!result.authenticated) {
-        alert("You must login");
-        vue.$router.push("/login");
-      } else vue.$router.push(to.path);
-    });
-  },
+  // beforeRouteEnter: async function (to, from, next) {
+  //   const token = sessionStorage.getItem("token");
+  //   const response = await fetch(
+  //     "http://localhost:7474/api/auth/validatetoken",
+  //     {
+  //       method: "GET",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         "x-access-token": `${token}`,
+  //       },
+  //     }
+  //   );
+  //   const result = await response.json();
+  //   next(async (vue) => {
+  //     if (!token) {
+  //       alert("You must login");
+  //       vue.$router.push("/login");
+  //     } else vue.$router.push(to.path);
+  //     if (!result.authenticated) {
+  //       alert("You must login");
+  //       vue.$router.push("/login");
+  //     } else {
+  //       vue.$router.push(to.path)
+  //       };
+  //   });
+  // },
 };
 </script>

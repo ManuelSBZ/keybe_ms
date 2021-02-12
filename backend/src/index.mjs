@@ -40,7 +40,7 @@ io.on('connection', (socket) => {
             console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
             consultants.able[user.username] = socket.id
             console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
-            io.to(socket.id).emit("connected",false)//eliminar
+            io.to(socket.id).emit("connected", false)//eliminar
 
         }
         if (String(user.rol) === "1" && waiting.length > 0) {
@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
                 userBasic.receiverId = socket.id
                 userBasic.chatId = chatCreated.chatId
                 consultants.unable[socket.username] = chatCreated.chatId
-                io.to(chatCreated.chatId).emit("connected",true)//eliminar
+                io.to(chatCreated.chatId).emit("connected", true)//eliminar
             })
 
         }
@@ -84,16 +84,16 @@ io.on('connection', (socket) => {
                 socket.receiver = consultantSocket.username
                 socket.receiverId = consultantSocket.id
                 socket.chatId = chatCreated.chatId
-                io.to(chatCreated.chatId).emit("connected",true)//eliminar
+                io.to(chatCreated.chatId).emit("connected", true)//eliminar
                 console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
                 console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
             })
-        }else if (String(user.rol) === "0") {
+        } else if (String(user.rol) === "0") {
 
             console.log("there is not consultant")
             console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
             waiting.push(socket)
-            io.to(socket.id).emit("connected",false)//eliminar
+            io.to(socket.id).emit("connected", false)//eliminar
 
         }
 
@@ -105,17 +105,27 @@ io.on('connection', (socket) => {
         socket.username = user.username
         sockets[socket.id] = socket
         console.log(`se conectado el socket : ${socket.id} - ${socket.username}, haciendo matching`)
-        chatModel.findOne({ "ticket": ticketId }).populate("messages").exec((error, chatFound) => {
+        chatModel.findOne({ "ticket": ticketId }).populate("messages").exec(async (error, chatFound) => {
             if (Object.entries(consultants.able).length) {
                 if (error) console.log(error)
                 console.log(`JOIN TO CHAT WITH ID ${chatFound.chatId}`)
                 socket.join(chatFound.chatId) // sincronizar cliente
-                let consultant = Object.entries(consultants.able)[0]
-                const USERNAME = consultant[0]
-                const ID = consultant[1]
-                delete consultants.able[USERNAME]
-                consultants.unable[USERNAME] = chatFound.chatId
-                const consultantSocket = sockets[ID]
+                let ticket = await ticketModel.findOne({ "ticket": ticketId })
+                let consultantSocket = null
+                if (consultants.able[ticket.consultant]) {
+                    consultantSocket = sockets[consultants.able[ticket.consultant]]
+                    delete consultants.able[consultantSocket.username]
+                    consultants.unable[consultantSocket.username] = chatFound.chatId
+
+                } else {
+                    let consultant = Object.entries(consultants.able)[0]
+                    const USERNAME = consultant[0]
+                    const ID = consultant[1]
+                    delete consultants.able[USERNAME]
+                    consultants.unable[USERNAME] = chatFound.chatId
+                    consultantSocket = sockets[ID]
+                }
+                consultantSocket.chatTicket=true
                 consultantSocket.join(chatFound.chatId)// sincronizar cliente
                 consultantSocket.receiver = socket.username
                 consultantSocket.receiverId = socket.id
@@ -127,7 +137,7 @@ io.on('connection', (socket) => {
                 console.log(`actual consultant's list (connected): ${JSON.stringify(consultants)}`)
                 // console.log(`${}`)
                 io.to(chatFound.chatId).emit("sending-chat", chatFound)
-                io.to(chatFound.chatId).emit("connected",true)//eliminar
+                io.to(chatFound.chatId).emit("connected", true)//eliminar
             } else console.log("no match ticket")
         })
     })
@@ -163,10 +173,10 @@ io.on('connection', (socket) => {
         }
 
     })
-    socket.on("writing", length=>{
-        if (length>0) socket.broadcast.to(socket.chatId).emit("setWriting",true)
-        else socket.broadcast.to(socket.chatId).emit("setWriting",false)
-    }) 
+    socket.on("writing", length => {
+        if (length > 0) socket.broadcast.to(socket.chatId).emit("setWriting", true)
+        else socket.broadcast.to(socket.chatId).emit("setWriting", false)
+    })
 
     socket.on("generate-ticket", () => {
         chatModel.findOne({ "chatId": socket.chatId })
@@ -176,11 +186,14 @@ io.on('connection', (socket) => {
                 if (error) console.log(error)
                 let ticketObject = new ticketModel(
                     {
-                        chat: chatFound
+                        chat: chatFound,
+                        consultant: socket.username,
+                        basic: socket.receiver
                     }
                 )
                 console.log(`going to save ticketObject ${JSON.stringify(ticketObject)}`)
                 await ticketObject.save(async (error, ticketObj) => {
+                    if(error)console.log(error)
                     let messageTicket = new messageModel(
                         {
                             sender: socket.username,
@@ -222,7 +235,8 @@ io.on('connection', (socket) => {
             console.log("CONSULTANT LEFT THE ROOM")
             console.log(`disconnect: ${socket.username}`)
             console.log(`actual list of consultants: ${JSON.stringify(consultants)}`)
-            waiting.push(sockets[socket.receiverId])
+            
+            !socket.chatTicket ? waiting.push(sockets[socket.receiverId]):delete sockets[socket.receiverId]
             delete consultants.unable[socket.username] // problema desaparece de la lista
             delete consultants.able[socket.username] // problema desaparece de la lista
             console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
@@ -234,9 +248,9 @@ io.on('connection', (socket) => {
             waiting.shift()
             console.log(`actual consultant's list ${JSON.stringify(consultants)}`)
 
-        }else waiting.shift()
+        } else waiting.shift()
         console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
-        io.to(socket.chatId).emit("connected",false)
+        io.to(socket.chatId).emit("connected", false)
         delete sockets[socket.id]
         console.log(`actual socket's list ${JSON.stringify(Object.keys(sockets))}`)
 

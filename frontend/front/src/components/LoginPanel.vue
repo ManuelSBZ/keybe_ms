@@ -96,7 +96,8 @@ export default {
 
       if(result.authenticated){
         sessionStorage.setItem("token",result.token)
-        this.$router.push("/")
+        window.location.replace("/")
+
       }else{
         alert("not authenticated")
       }

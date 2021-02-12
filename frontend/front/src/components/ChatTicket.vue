@@ -128,6 +128,7 @@ export default {
       ticketToSend: null,
       user: null,
       toggle: false,
+      username: []
     };
   },
   methods: {
@@ -153,6 +154,8 @@ export default {
       console.log(response);
       if (response.validated) {
         this.socket.emit("match-chat-ticket", this.user, this.ticketToSend);
+      }else{
+        alert("invalid ticket")
       }
     },
     imWriting: function () {
@@ -188,7 +191,7 @@ export default {
       this.messageToSend = "";
       this.socket.emit("writing", this.messageToSend.length);
     },
-        message() {
+    message() {
       setTimeout(() => {
         let chatContainer = document.getElementById("containerChat");
         chatContainer.scrollTop =
@@ -213,7 +216,10 @@ export default {
     });
     this.socket.on("connected", (data) => {
       console.log("EVENTO CONNECTEEED TICKET");
-      if (!data) this.status.connected = false;
+      if (!data){
+        this.status.connected = false;
+        this.username[0]=this.user.username
+        }
       else this.status.connected = true;
     });
     this.socket.on("setWriting", (data) => {

@@ -32,8 +32,6 @@ export default {
         vue.$router.push("/login");
       } else vue.$router.push(to.path);
     })
-       console.log("finnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn")
-
   }
 };
 </script>
